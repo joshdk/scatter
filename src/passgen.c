@@ -37,7 +37,7 @@ int pass_fini(pass_ctx * ctx){
 
 /*{{{ Initialize a pass object from a string */
 int pass_load_str(pass_ctx * ctx, const char * start, size_t start_size, const char * chars, size_t chars_size){
-	ctx->index_size = 1;
+	ctx->index_size = 256;
 	ctx->index_length = start_size;
 	ctx->index = calloc(ctx->index_size, sizeof(size_t));
 
@@ -66,7 +66,7 @@ int pass_load_str(pass_ctx * ctx, const char * start, size_t start_size, const c
 
 /*{{{ Initialize a pass object from an int */
 int pass_load_int(pass_ctx * ctx, size_t step){
-	ctx->index_size = 1;
+	ctx->index_size = 256;
 	ctx->index_length = 0;
 	ctx->index = calloc(ctx->index_size, sizeof(size_t));
 
