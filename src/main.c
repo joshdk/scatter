@@ -17,9 +17,13 @@ void print_hex(void * data, size_t data_size){
 }
 
 
-int main(int argc, char **argv){
+int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
-	MPI_Init(&argc, &argv);
+	if(rank == 0){
+		for(size_t i=0; i<argc; i++){
+			printf("argv[%zu] %s\n", i, argv[i]);
+		}
+	}
 
 	if(argc < 2){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
@@ -43,10 +47,6 @@ int main(int argc, char **argv){
 		exit(1);
 	}
 
-	int rank, rank_count;
-	MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
 	size_t pass_size = 256;
 	size_t pass_length = 0;
 	char * pass = calloc(pass_size, sizeof(char));
@@ -57,11 +57,11 @@ int main(int argc, char **argv){
 
 	pass_ctx pctx;
 	pass_init(&pctx, 3);
-	pass_load_int(&pctx, 0);
+	pass_load_int(&pctx, rank);
 
 	pass_ctx pstp;
 	pass_init(&pstp, 3);
-	pass_load_int(&pstp, 2);
+	pass_load_int(&pstp, ranks);
 
 	for(size_t n=0; n<iterations; n++){
 		pass_blit(&pctx, "abc", pass, &pass_length);
@@ -71,6 +71,8 @@ int main(int argc, char **argv){
 		pass_step(&pctx, &pstp);
 	}
 
+	printf("rank: %zu | pass: %s\n", rank, pass);
+
 	pass_fini(&pctx);
 	pass_fini(&pstp);
 
@@ -79,7 +81,37 @@ int main(int argc, char **argv){
 
 	hash_fini(&hctx);
 
-	MPI_Finalize();
-
 	return 0;
+}
+
+
+int main(int argc, char **argv){
+	char name[] = "scatter";
+
+	if(MPI_Init(&argc, &argv) != MPI_SUCCESS){
+		fprintf(stderr, "%s: error: Unable to initialize MPI.\n", name);
+		return 1;
+	}
+
+	int ranks;
+	if(MPI_Comm_size(MPI_COMM_WORLD, &ranks) != MPI_SUCCESS){
+		fprintf(stderr, "%s: error: Unable to determine MPI comm size.\n", name);
+		return 1;
+	}
+
+	int rank;
+	if(MPI_Comm_rank(MPI_COMM_WORLD, &rank) != MPI_SUCCESS){
+		fprintf(stderr, "%s: error: Unable to determine MPI comm rank.\n", name);
+		return 1;
+	}
+
+	int ret;
+	ret = mpi_main(ranks, rank, argc, argv);
+
+	if(MPI_Finalize() != MPI_SUCCESS){
+		fprintf(stderr, "%s: error: Unable to finalize MPI.\n", name);
+		return 1;
+	}
+
+	return ret;
 }
