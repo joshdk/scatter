@@ -96,17 +96,18 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 		iterations = atoi(argv[2]);
 	}
 
-	void ** data = NULL;
-	data = malloc(sizeof(void *) * 2);
-	data[0] = module;
-	data[1] = &iterations;
-
 	if(rank == 0){
 		mpi_master(ranks, rank, NULL);
 
 	}else{
+		void ** data = NULL;
+		data = malloc(sizeof(void *) * 2);
+		data[0] = module;
+		data[1] = &iterations;
+
 		mpi_slave(ranks, rank, data);
 
+		free(data);
 	}
 
 	return 0;
