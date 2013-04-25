@@ -17,6 +17,7 @@ void print_hex(void * data, size_t data_size){
 }
 
 
+/*{{{ MPI entry point */
 int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
 	if(rank == 0){
@@ -83,8 +84,10 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
 	return 0;
 }
+/*}}}*/
 
 
+/*{{{ Application entry point */
 int main(int argc, char **argv){
 	char name[] = "scatter";
 
@@ -115,3 +118,4 @@ int main(int argc, char **argv){
 
 	return ret;
 }
+/*}}}*/
