@@ -20,6 +20,11 @@ void print_hex(void * data, size_t data_size){
 /*{{{ MPI entry point */
 int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
+	if(ranks < 2){
+		fprintf(stderr, "scatter: error: There needs to be at least two ranks.\n");
+		exit(1);
+	}
+
 	if(argc < 2){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
 		exit(1);
