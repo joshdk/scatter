@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <mpi.h>
 #include "passgen.h"
 #include "hashgen.h"
 
@@ -17,6 +18,8 @@ void print_hex(void * data, size_t data_size){
 
 
 int main(int argc, char **argv){
+
+	MPI_Init(&argc, &argv);
 
 	if(argc < 2){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
@@ -39,6 +42,10 @@ int main(int argc, char **argv){
 		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
 		exit(1);
 	}
+
+	int rank, rank_count;
+	MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	size_t pass_size = 256;
 	size_t pass_length = 0;
@@ -71,6 +78,8 @@ int main(int argc, char **argv){
 	free(hash);
 
 	hash_fini(&hctx);
+
+	MPI_Finalize();
 
 	return 0;
 }
