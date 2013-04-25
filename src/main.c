@@ -17,6 +17,18 @@ void print_hex(void * data, size_t data_size){
 }
 
 
+int mpi_master(size_t ranks, size_t rank, void * data){
+
+	return 0;
+}
+
+
+int mpi_slave(size_t ranks, size_t rank, void * data){
+
+	return 0;
+}
+
+
 /*{{{ MPI entry point */
 int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
