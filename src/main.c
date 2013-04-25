@@ -20,12 +20,6 @@ void print_hex(void * data, size_t data_size){
 /*{{{ MPI entry point */
 int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
-	if(rank == 0){
-		for(size_t i=0; i<argc; i++){
-			printf("argv[%zu] %s\n", i, argv[i]);
-		}
-	}
-
 	if(argc < 2){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
 		exit(1);
