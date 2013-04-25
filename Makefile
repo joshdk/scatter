@@ -5,7 +5,7 @@ INSTALL_DIR       = ~/.bin
 NAME               = hashtest
 TARGET             = $(BUILD_DIR)/$(NAME)
 
-CC                 = gcc
+CC                 = mpicc
 CFLAGS             = -std=c99 -Wall -Wextra -pedantic -g2 -ldl -fpic -O2
 
 
