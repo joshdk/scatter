@@ -91,31 +91,37 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 int main(int argc, char **argv){
 	char name[] = "scatter";
 
+	// Attempt to initialize MPI environment
 	if(MPI_Init(&argc, &argv) != MPI_SUCCESS){
 		fprintf(stderr, "%s: error: Unable to initialize MPI.\n", name);
 		return 1;
 	}
 
 	int ranks;
+	// Attempt to determine how many MPI ranks there are
 	if(MPI_Comm_size(MPI_COMM_WORLD, &ranks) != MPI_SUCCESS){
 		fprintf(stderr, "%s: error: Unable to determine MPI comm size.\n", name);
 		return 1;
 	}
 
 	int rank;
+	// Attempt to determine which MPI rank we are
 	if(MPI_Comm_rank(MPI_COMM_WORLD, &rank) != MPI_SUCCESS){
 		fprintf(stderr, "%s: error: Unable to determine MPI comm rank.\n", name);
 		return 1;
 	}
 
 	int ret;
+	// Call the MPI main, and pass in some extra information
 	ret = mpi_main(ranks, rank, argc, argv);
 
+	// Attempt to tear down MPI environment
 	if(MPI_Finalize() != MPI_SUCCESS){
 		fprintf(stderr, "%s: error: Unable to finalize MPI.\n", name);
 		return 1;
 	}
 
+	// Return whatever the MPI main returned
 	return ret;
 }
 /*}}}*/
