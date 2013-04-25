@@ -22,12 +22,12 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
 	if(ranks < 2){
 		fprintf(stderr, "scatter: error: There needs to be at least two ranks.\n");
-		exit(1);
+		return 1;
 	}
 
 	if(argc < 2){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
-		exit(1);
+		return 1;
 	}
 
 	char * module = NULL;
@@ -44,7 +44,7 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
 	if(hash_load(&hctx, module) != 0){
 		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
-		exit(1);
+		return 1;
 	}
 
 	size_t pass_size = 256;
