@@ -24,10 +24,9 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 
 int mpi_slave(size_t ranks, size_t rank, void * data){
-	char * module = ((void **)data)[0];
-	size_t iterations = *(size_t *)((void **)data)[1];
+	char module[] = "./build/modules/md5.so";
+	size_t iterations = 1000;
 	printf("rank: %zu | module: %s iters: %zu\n", rank, module, iterations);
-
 
 	hash_ctx hctx;
 	hash_init(&hctx);
@@ -83,31 +82,37 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 		return 1;
 	}
 
-	if(argc < 2){
+	if(argc < 3){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
 		return 1;
 	}
 
-	char * module = NULL;
-	module = argv[1];
+	if(rank == 0){
+		FILE * ifile = NULL;
+		if((ifile = fopen(argv[1], "r")) == NULL){
+			fprintf(stderr, "scatter: error: Unable to open `%s' for reading.\n", argv[1]);
+			return 1;
+		}
 
-	size_t iterations = 100;
-	if(argc >= 3){
-		iterations = atoi(argv[2]);
+		FILE * ofile = NULL;
+		if((ofile = fopen(argv[2], "a")) == NULL){
+			fprintf(stderr, "scatter: error: Unable to open `%s' for writing.\n", argv[2]);
+			return 1;
+		}
+
+		FILE ** files = malloc(sizeof(FILE *) * 2);
+		files[0] = ifile;
+		files[1] = ofile;
+
+		mpi_master(ranks, rank, files);
+
+		free(files);
+		fclose(ifile);
+		fclose(ofile);
 	}
 
-	if(rank == 0){
-		mpi_master(ranks, rank, NULL);
-
-	}else{
-		void ** data = NULL;
-		data = malloc(sizeof(void *) * 2);
-		data[0] = module;
-		data[1] = &iterations;
-
-		mpi_slave(ranks, rank, data);
-
-		free(data);
+	if(rank != 0){
+		mpi_slave(ranks, rank, NULL);
 	}
 
 	return 0;
