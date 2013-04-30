@@ -16,6 +16,7 @@ int afreadline(char ** strp, FILE * stream){
 
 		if(feof(stream) != 0){
 			if(buffer_length == 0){
+				free(buffer);
 				return -1;
 			}
 			break;
