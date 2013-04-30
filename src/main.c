@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include "passgen.h"
 #include "hashgen.h"
+#include "parse.h"
 
 
 
@@ -18,6 +19,55 @@ void print_hex(void * data, size_t data_size){
 
 
 int mpi_master(size_t ranks, size_t rank, void * data){
+	FILE ** files = data;
+	FILE * ifile = files[0];
+	FILE * ofile = files[1];
+
+	char * type = NULL;
+
+	// otain the type of hash we're dealing with
+	if(afreadline(&type, ifile) < 0){
+		fprintf(stderr, "scatter: error: Unable to read hash type from file.\n");
+		return 1;
+	}
+
+	size_t hashes_size = 1;
+	size_t hashes_length = 0;
+	char ** hashes = malloc(sizeof(*hashes) * hashes_size);
+
+	char * line = NULL;
+	while(afreadline(&line, ifile) >= 0){
+
+		// resize hashes array
+		while(hashes_length >= hashes_size - 1){
+			char ** tmp = NULL;
+			hashes_size *= 2;
+			if((tmp = realloc(hashes, sizeof(*hashes) * hashes_size)) == NULL){
+				fprintf(stderr, "scatter: error: Unable to reallocate hash table.\n");
+				return 1;
+			}
+			hashes = tmp;
+		}
+
+		// is this a valid ___ hash?
+		if(1){
+			hashes[hashes_length] = line;
+			hashes_length += 1;
+			hashes[hashes_length] = NULL;
+		}else{
+			free(line);
+		}
+
+	}
+
+	printf("type: [%s]\n", type);
+	free(type);
+
+	for(size_t i=0; i<hashes_length; i++){
+		printf("hash: [%s]\n", hashes[i]);
+		free(hashes[i]);
+	}
+	free(hashes);
 
 	return 0;
 }
