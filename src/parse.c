@@ -40,9 +40,9 @@ int afreadline(char ** strp, FILE * stream){
 
 		buffer[buffer_length] = ch;
 		buffer_length += 1;
+		buffer[buffer_length] = '\0';
 	}
 
-	buffer[buffer_length] = '\0';
 	*strp = buffer;
 	return buffer_length;
 }

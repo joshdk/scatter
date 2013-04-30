@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,20 +19,47 @@ void print_hex(void * data, size_t data_size){
 }
 
 
-/*{{{*/
 int mpi_master(size_t ranks, size_t rank, void * data){
 	FILE ** files = data;
 	FILE * ifile = files[0];
 	FILE * ofile = files[1];
 
-	char * type = NULL;
-
 	// otain the type of hash we're dealing with
+	char * type = NULL;
 	if(afreadline(&type, ifile) < 0){
 		fprintf(stderr, "scatter: error: Unable to read hash type from file.\n");
 		return 1;
 	}
 
+	// Where should we look fo hash modules?
+	char * dirname = NULL;
+	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
+		dirname = ".";
+	}
+
+	// Construct hash module path
+	char * module = NULL;
+	size_t module_length = asprintf(&module, "%s/%s.so", dirname, type);
+
+	// Load our hash module
+	hash_ctx hctx;
+	hash_init(&hctx);
+	if(hash_load(&hctx, module) != 0){
+		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
+		return 1;
+	}
+
+	// We don't need the module name anymore
+	free(module);
+
+	// What is the size of this specific hash?
+	size_t hash_size;
+	hctx.info(&hash_size);
+
+	// We don't need the hash module any more
+	hash_fini(&hctx);
+
+	// This will contain our list of valid hashes
 	size_t hashes_size = 1;
 	size_t hashes_length = 0;
 	char ** hashes = malloc(sizeof(*hashes) * hashes_size);
@@ -51,7 +79,7 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 		}
 
 		// is this a valid ___ hash?
-		if(1){
+		if(hash_size * 2 == strlen(line)){
 			hashes[hashes_length] = line;
 			hashes_length += 1;
 			hashes[hashes_length] = NULL;
@@ -61,6 +89,7 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 	}
 
+	// Output some debug information
 	printf("type: [%s]\n", type);
 	free(type);
 
@@ -72,13 +101,11 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 	return 0;
 }
-/*}}}*/
 
 
-/*{{{*/
 int mpi_slave(size_t ranks, size_t rank, void * data){
 	char module[] = "./build/modules/md5.so";
-	size_t iterations = 1;
+	size_t iterations = 1000;
 	printf("rank: %zu | module: %s iters: %zu\n", rank, module, iterations);
 
 	hash_ctx hctx;
@@ -125,7 +152,6 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 
 	return 0;
 }
-/*}}}*/
 
 
 /*{{{ MPI entry point */
@@ -133,7 +159,7 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 
 	if(ranks < 2){
 		fprintf(stderr, "scatter: error: There needs to be at least two ranks.\n");
-		// return 1;
+		return 1;
 	}
 
 	if(argc < 3){
