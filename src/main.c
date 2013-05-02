@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <ctype.h>
 #include <mpi.h>
 #include "passgen.h"
 #include "hashgen.h"
@@ -17,6 +18,61 @@ void print_hex(void * data, size_t data_size){
 	}
 	printf("\n");
 }
+
+
+/*{{{ Convert raw buffer to hex string */
+int buf_to_hex(char ** strp, const char * data, size_t data_length){
+	size_t buffer_size = data_length * 2 + 1;
+	size_t buffer_length = 0;
+	char * buffer = malloc(sizeof(*buffer) * buffer_size);
+
+	const char charset[] = "0123456789ABCDEF";
+
+	for(size_t i=0; i<data_length; i++){
+		buffer[buffer_length + 0] = charset[(data[i] & 0xF0) >> 4];
+		buffer[buffer_length + 1] = charset[(data[i] & 0x0F) >> 0];
+		buffer_length += 2;
+	}
+
+	buffer[buffer_length] = '\0';
+	*strp = buffer;
+	return buffer_length;
+}
+/*}}}*/
+
+
+/*{{{ Convert hex string to raw buffer */
+int hex_to_buf(char ** bufp, const char * data){
+	size_t data_length = strlen(data);
+	if(data_length % 2 == 1){
+		return -1;
+	}
+
+	size_t buffer_size = data_length / 2 + 1;
+	size_t buffer_length = 0;
+	char * buffer = malloc(sizeof(*buffer) * buffer_size);
+
+	for(size_t i=0; i<data_length; i+=2){
+		if(isxdigit(data[i + 0]) == 0){
+			return -1;
+		}
+		if(isxdigit(data[i + 1]) == 0){
+			return -1;
+		}
+
+		printf("[%c][%c]\n", data[i], data[i+1]);
+
+		int hi = isdigit(data[i+0]) ? data[i+0] - '0' : data[i+0] - (isupper(data[i+0]) ? 'A' : 'a') + 10;
+		int lo = isdigit(data[i+1]) ? data[i+1] - '0' : data[i+1] - (isupper(data[i+1]) ? 'A' : 'a') + 10;
+		printf("[%d][%d]\n", hi, lo);
+		buffer[buffer_length] = (hi << 4) | (lo << 0);
+		buffer_length += 1;
+	}
+	buffer[buffer_length] = '\0';
+	*bufp = buffer;
+	return buffer_length;
+}
+/*}}}*/
 
 
 int mpi_master(size_t ranks, size_t rank, void * data){
