@@ -105,6 +105,7 @@ int hex_to_buf(char ** bufp, const char * data){
 /*}}}*/
 
 
+/*{{{ Master function */
 int mpi_master(size_t ranks, size_t rank, void * data){
 	FILE ** files = data;
 	FILE * ifile = files[0];
@@ -181,8 +182,10 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 	return 0;
 }
+/*}}}*/
 
 
+/*{{{ Slave function */
 int mpi_slave(size_t ranks, size_t rank, void * data){
 	// Recieve hash type
 	char * type = NULL;
@@ -237,6 +240,7 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 
 	return 0;
 }
+/*}}}*/
 
 
 /*{{{ MPI entry point */
