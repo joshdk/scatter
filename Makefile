@@ -32,7 +32,7 @@ build: $(TARGET)
 
 modules: $(BUILD_DIR)/modules/md5.so $(BUILD_DIR)/modules/sha256.so
 
-$(TARGET): $(BUILD_DIR)/main.o $(BUILD_DIR)/passgen.o $(BUILD_DIR)/hashgen.o $(BUILD_DIR)/parse.o
+$(TARGET): $(BUILD_DIR)/main.o $(BUILD_DIR)/passgen.o $(BUILD_DIR)/hashgen.o $(BUILD_DIR)/parse.o $(BUILD_DIR)/io.o
 	@echo 'Building target:'
 	$(CC) $(CFLAGS) $^ -o $@
 	@echo -e $(SUCCESS_MSG)
