@@ -175,22 +175,32 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	char module[] = "./build/modules/md5.so";
-	size_t iterations = 1000;
-	printf("rank: %zu | module: %s iters: %zu\n", rank, module, iterations);
+	// Where should we look fo hash modules?
+	char * dirname = NULL;
+	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
+		dirname = ".";
+	}
 
+	// Construct hash module path
+	char * module = NULL;
+	size_t module_length = asprintf(&module, "%s/%s.so", dirname, type);
+
+	// Load our hash module
 	hash_ctx hctx;
 	hash_init(&hctx);
-
 	if(hash_load(&hctx, module) != 0){
 		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
 		return 1;
 	}
 
+	// We don't need the module name anymore
+	free(module);
+
 	size_t pass_size = 256;
 	size_t pass_length = 0;
 	char * pass = calloc(pass_size, sizeof(char));
 
+	// What is the size of this specific hash?
 	size_t hash_size;
 	hctx.info(&hash_size);
 	char * hash = calloc(hash_size, sizeof(char));
@@ -203,6 +213,7 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	pass_init(&pstp, 3);
 	pass_load_int(&pstp, ranks-1);
 
+	size_t iterations = 1000;
 	for(size_t n=0; n<iterations; n++){
 		pass_blit(&pctx, "abc", pass, &pass_length);
 		// printf("pass: %s\n", pass);
