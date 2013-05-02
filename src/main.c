@@ -93,6 +93,8 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 		mpi_isend_hash_type(type, target);
 	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// Where should we look fo hash modules?
 	char * dirname = NULL;
 	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
@@ -170,6 +172,8 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	char * type = NULL;
 	mpi_recv_hash_type(&type);
 	printf("rank: %zu type: [%s]\n", rank, type);
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	char module[] = "./build/modules/md5.so";
 	size_t iterations = 1000;
