@@ -21,6 +21,35 @@ void print_hex(void * data, size_t data_size){
 }
 
 
+/*{{{ Load a module based on the module type */
+int hash_path_load(const char * type, hash_ctx * hctx){
+
+	// Where should we look fo hash modules?
+	char * path = NULL;
+	if((path = getenv("HASH_MODULE_PATH")) == NULL){
+		path = "./modules";
+	}
+
+	// Construct hash module path
+	char * module = NULL;
+	size_t module_length = asprintf(&module, "%s/%s.so", path, type);
+
+	// Load our hash module
+	// hash_ctx hctx;
+	// hash_init(&hctx);
+	if(hash_load(hctx, module) != 0){
+		// fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
+		return 1;
+	}
+
+	// We don't need the module name anymore
+	free(module);
+
+	return 0;
+}
+/*}}}*/
+
+
 /*{{{ Convert raw buffer to hex string */
 int buf_to_hex(char ** strp, const char * data, size_t data_length){
 	size_t buffer_size = data_length * 2 + 1;
@@ -95,26 +124,13 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Where should we look fo hash modules?
-	char * dirname = NULL;
-	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
-		dirname = ".";
-	}
-
-	// Construct hash module path
-	char * module = NULL;
-	size_t module_length = asprintf(&module, "%s/%s.so", dirname, type);
-
 	// Load our hash module
 	hash_ctx hctx;
 	hash_init(&hctx);
-	if(hash_load(&hctx, module) != 0){
-		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
+	if(hash_path_load(type, &hctx) != 0){
+		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", type);
 		return 1;
 	}
-
-	// We don't need the module name anymore
-	free(module);
 
 	// What is the size of this specific hash?
 	size_t hash_size;
@@ -175,26 +191,13 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Where should we look fo hash modules?
-	char * dirname = NULL;
-	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
-		dirname = ".";
-	}
-
-	// Construct hash module path
-	char * module = NULL;
-	size_t module_length = asprintf(&module, "%s/%s.so", dirname, type);
-
 	// Load our hash module
 	hash_ctx hctx;
 	hash_init(&hctx);
-	if(hash_load(&hctx, module) != 0){
-		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", module);
+	if(hash_path_load(type, &hctx) != 0){
+		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", type);
 		return 1;
 	}
-
-	// We don't need the module name anymore
-	free(module);
 
 	size_t pass_size = 256;
 	size_t pass_length = 0;
