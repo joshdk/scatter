@@ -8,6 +8,7 @@
 #include "passgen.h"
 #include "hashgen.h"
 #include "parse.h"
+#include "io.h"
 
 
 
@@ -87,6 +88,11 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 		return 1;
 	}
 
+	// Send hash type to all ranks
+	for(size_t target=1; target<ranks; target++){
+		mpi_isend_hash_type(type, target);
+	}
+
 	// Where should we look fo hash modules?
 	char * dirname = NULL;
 	if((dirname = getenv("HASH_MODULE_PATH")) == NULL){
@@ -160,6 +166,11 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 
 int mpi_slave(size_t ranks, size_t rank, void * data){
+	// Recieve hash type
+	char * type = NULL;
+	mpi_recv_hash_type(&type);
+	printf("rank: %zu type: [%s]\n", rank, type);
+
 	char module[] = "./build/modules/md5.so";
 	size_t iterations = 1000;
 	printf("rank: %zu | module: %s iters: %zu\n", rank, module, iterations);
