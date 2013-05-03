@@ -90,11 +90,8 @@ int hex_to_buf(char ** bufp, const char * data){
 			return -1;
 		}
 
-		printf("[%c][%c]\n", data[i], data[i+1]);
-
 		int hi = isdigit(data[i+0]) ? data[i+0] - '0' : data[i+0] - (isupper(data[i+0]) ? 'A' : 'a') + 10;
 		int lo = isdigit(data[i+1]) ? data[i+1] - '0' : data[i+1] - (isupper(data[i+1]) ? 'A' : 'a') + 10;
-		printf("[%d][%d]\n", hi, lo);
 		buffer[buffer_length] = (hi << 4) | (lo << 0);
 		buffer_length += 1;
 	}
@@ -161,13 +158,19 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 
 		// is this a valid ___ hash?
 		if(hash_size * 2 == strlen(line)){
-			hashes[hashes_length] = line;
-			hashes_length += 1;
-			hashes[hashes_length] = NULL;
-		}else{
-			free(line);
+			char * buffer = NULL;
+			if(hex_to_buf(&buffer, line) != -1){
+				hashes[hashes_length] = buffer;
+				hashes_length += 1;
+				hashes[hashes_length] = NULL;
+			}
 		}
+		free(line);
 
+	}
+
+	for(size_t target=1; target<ranks; target++){
+		mpi_isend_hashes(hashes, hash_size, hashes_length, target);
 	}
 
 	// Output some debug information
@@ -210,6 +213,15 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	size_t hash_size;
 	hctx.info(&hash_size);
 	char * hash = calloc(hash_size, sizeof(char));
+
+	size_t hashes_length = 0;
+	char ** hashes = NULL;
+	mpi_recv_hashes(&hashes, hash_size, &hashes_length);
+
+	for(size_t i=0; i<hashes_length; i++){
+		free(hashes[i]);
+	}
+	free(hashes);
 
 	pass_ctx pctx;
 	pass_init(&pctx, 3);
