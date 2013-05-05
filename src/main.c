@@ -195,6 +195,8 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 		mpi_isend_charset(charset, charset_length, target);
 	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	return 0;
 }
 /*}}}*/
@@ -240,6 +242,8 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	size_t charset_length = 0;
 	char * charset = NULL;
 	mpi_recv_charset(&charset, &charset_length);
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	printf("rank: %zu chars: [%s]\n", rank, charset);
 
