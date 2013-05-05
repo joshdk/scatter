@@ -207,7 +207,7 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	// Recieve hash type
 	char * type = NULL;
 	mpi_recv_hash_type(&type);
-	printf("rank: %zu type: [%s]\n", rank, type);
+	printf("[SLVE|%04zu:%02zu] Hash type recieved.\n", rank, 0ul);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -218,6 +218,7 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 		fprintf(stderr, "scatter: error: Failed to load module `%s'\n", type);
 		return 1;
 	}
+	printf("[SLVE|%04zu:%02zu] Hash module loaded.\n", rank, 0ul);
 
 	size_t pass_size = 256;
 	size_t pass_length = 0;
@@ -231,16 +232,16 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	size_t hashes_length = 0;
 	char ** hashes = NULL;
 	mpi_recv_hashes(&hashes, hash_size, &hashes_length);
+	printf("[SLVE|%04zu:%02zu] Hashes recieved.\n", rank, 0ul);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	size_t charset_length = 0;
 	char * charset = NULL;
 	mpi_recv_charset(&charset, &charset_length);
+	printf("[SLVE|%04zu:%02zu] Charset recieved.\n", rank, 0ul);
 
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	printf("rank: %zu chars: [%s]\n", rank, charset);
 
 	pass_ctx pctx;
 	pass_init(&pctx, charset_length);
@@ -253,15 +254,13 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	size_t iterations = 1000000;
 	for(size_t n=0; n<iterations; n++){
 		pass_blit(&pctx, charset, pass, &pass_length);
-		// printf("pass: %s\n", pass);
 		hctx.hash(pass, pass_length, hash, &hash_size);
-		// print_hex(hash, hash_size);
 		for(size_t i=0; i<hashes_length; i++){
 			if(memcmp(hash, hashes[i], hash_size) == 0){
-				printf("[SLVE|%04zu:%02zu] Hash cracked.\n", rank, 0);
+				printf("[SLVE|%04zu:%02zu] Hash cracked.\n", rank, 0ul);
 				char * hex = NULL;
 				buf_to_hex(&hex, hash, hash_size);
-				printf("[SLVE|%04zu:%02zu] %s %s\n", rank, 0, hex, pass);
+				printf("[SLVE|%04zu:%02zu] %s %s\n", rank, 0ul, hex, pass);
 				free(hex);
 			}
 		}
