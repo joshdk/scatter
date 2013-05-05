@@ -105,12 +105,13 @@ int hex_to_buf(char ** bufp, const char * data){
 /*{{{ Master function */
 int mpi_master(size_t ranks, size_t rank, void * data){
 	FILE ** files = data;
-	FILE * ifile = files[0];
-	FILE * ofile = files[1];
+	FILE * hashfile = files[0];
+	FILE * charfile = files[1];
+	FILE * passfile = files[1];
 
 	// otain the type of hash we're dealing with
 	char * type = NULL;
-	if(afreadline(&type, ifile) < 0){
+	if(afreadline(&type, hashfile) < 0){
 		fprintf(stderr, "scatter: error: Unable to read hash type from file.\n");
 		return 1;
 	}
@@ -143,7 +144,7 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 	char ** hashes = malloc(sizeof(*hashes) * hashes_size);
 
 	char * line = NULL;
-	while(afreadline(&line, ifile) >= 0){
+	while(afreadline(&line, hashfile) >= 0){
 
 		// resize hashes array
 		while(hashes_length >= hashes_size - 1){
@@ -173,15 +174,22 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 		mpi_isend_hashes(hashes, hash_size, hashes_length, target);
 	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// Output some debug information
 	printf("type: [%s]\n", type);
 	free(type);
 
 	for(size_t i=0; i<hashes_length; i++){
-		printf("hash: [%s]\n", hashes[i]);
 		free(hashes[i]);
 	}
 	free(hashes);
+
+	size_t charset_length = 0;
+	char * charset = NULL;
+
+	charset_length = acharset(&charset, charfile);
+	printf("chars: [%s]\n", charset);
 
 	return 0;
 }
@@ -217,6 +225,8 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	size_t hashes_length = 0;
 	char ** hashes = NULL;
 	mpi_recv_hashes(&hashes, hash_size, &hashes_length);
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	for(size_t i=0; i<hashes_length; i++){
 		free(hashes[i]);
@@ -263,33 +273,41 @@ int mpi_main(size_t ranks, size_t rank, size_t argc, char **argv){
 		return 1;
 	}
 
-	if(argc < 3){
+	if(argc < 4){
 		fprintf(stderr, "scatter: error: Insufficient parameters.\n");
 		return 1;
 	}
 
 	if(rank == 0){
-		FILE * ifile = NULL;
-		if((ifile = fopen(argv[1], "r")) == NULL){
+		FILE * hashfile = NULL;
+		if((hashfile = fopen(argv[1], "r")) == NULL){
 			fprintf(stderr, "scatter: error: Unable to open `%s' for reading.\n", argv[1]);
 			return 1;
 		}
 
-		FILE * ofile = NULL;
-		if((ofile = fopen(argv[2], "a")) == NULL){
-			fprintf(stderr, "scatter: error: Unable to open `%s' for writing.\n", argv[2]);
+		FILE * charfile = NULL;
+		if((charfile = fopen(argv[2], "r")) == NULL){
+			fprintf(stderr, "scatter: error: Unable to open `%s' for reading.\n", argv[2]);
 			return 1;
 		}
 
-		FILE ** files = malloc(sizeof(FILE *) * 2);
-		files[0] = ifile;
-		files[1] = ofile;
+		FILE * passfile = NULL;
+		if((passfile = fopen(argv[3], "a")) == NULL){
+			fprintf(stderr, "scatter: error: Unable to open `%s' for writing.\n", argv[3]);
+			return 1;
+		}
+
+		FILE ** files = malloc(sizeof(FILE *) * 3);
+		files[0] = hashfile;
+		files[1] = charfile;
+		files[2] = passfile;
 
 		mpi_master(ranks, rank, files);
 
 		free(files);
-		fclose(ifile);
-		fclose(ofile);
+		fclose(hashfile);
+		fclose(charfile);
+		fclose(passfile);
 	}
 
 	if(rank != 0){
