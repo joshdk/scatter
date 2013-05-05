@@ -258,8 +258,11 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 		// print_hex(hash, hash_size);
 		for(size_t i=0; i<hashes_length; i++){
 			if(memcmp(hash, hashes[i], hash_size) == 0){
-				printf("rank: %zu \"%s\" => ", rank, pass);
-				print_hex(hash, hash_size);
+				printf("[SLVE|%04zu:%02zu] Hash cracked.\n", rank, 0);
+				char * hex = NULL;
+				buf_to_hex(&hex, hash, hash_size);
+				printf("[SLVE|%04zu:%02zu] %s %s\n", rank, 0, hex, pass);
+				free(hex);
 			}
 		}
 
