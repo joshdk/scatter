@@ -244,16 +244,16 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	printf("rank: %zu chars: [%s]\n", rank, charset);
 
 	pass_ctx pctx;
-	pass_init(&pctx, 3);
+	pass_init(&pctx, charset_length);
 	pass_load_int(&pctx, rank-1);
 
 	pass_ctx pstp;
-	pass_init(&pstp, 3);
+	pass_init(&pstp, charset_length);
 	pass_load_int(&pstp, ranks-1);
 
 	size_t iterations = 1000;
 	for(size_t n=0; n<iterations; n++){
-		pass_blit(&pctx, "abc", pass, &pass_length);
+		pass_blit(&pctx, charset, pass, &pass_length);
 		// printf("pass: %s\n", pass);
 		hctx.hash(pass, pass_length, hash, &hash_size);
 		// print_hex(hash, hash_size);
