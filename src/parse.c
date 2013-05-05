@@ -117,4 +117,41 @@ int asplit(char *** arrp, const char * str, size_t size, const char * delim){
 	return chunks_length;
 }
 
+
+int acharset(char ** bufp, FILE * stream){
+	size_t * table = calloc(256, sizeof(*table));
+	size_t count = 0;
+
+	while(1){
+		int c = fgetc(stream);
+		if(feof(stream)){
+			break;
+		}
+
+		if(isprint(c) == 0){
+			continue;
+		}
+
+		if(table[c] == 0){
+			count += 1;
+		}
+
+		table[c] = 1;
+	}
+
+	size_t buffer_size = count + 1;
+	size_t buffer_length = 0;
+	char * buffer = calloc(buffer_size, sizeof(*buffer));
+	for(size_t i=0; i<256; i++){
+		if(table[i] == 1){
+			buffer[buffer_length] = (char)i;
+			buffer_length += 1;
+			buffer[buffer_length] = '\0';
+		}
+	}
+
+	*bufp = buffer;
+	return buffer_length;
+}
+
 #endif
