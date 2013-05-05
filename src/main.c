@@ -191,6 +191,10 @@ int mpi_master(size_t ranks, size_t rank, void * data){
 	charset_length = acharset(&charset, charfile);
 	printf("chars: [%s]\n", charset);
 
+	for(size_t target=1; target<ranks; target++){
+		mpi_isend_charset(charset, charset_length, target);
+	}
+
 	return 0;
 }
 /*}}}*/
@@ -232,6 +236,12 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 		free(hashes[i]);
 	}
 	free(hashes);
+
+	size_t charset_length = 0;
+	char * charset = NULL;
+	mpi_recv_charset(&charset, &charset_length);
+
+	printf("rank: %zu chars: [%s]\n", rank, charset);
 
 	pass_ctx pctx;
 	pass_init(&pctx, 3);
