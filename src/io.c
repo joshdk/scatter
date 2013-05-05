@@ -77,4 +77,36 @@ int mpi_recv_hashes(char *** data, size_t size, size_t * nmem){
 	return 0;
 }
 
+
+int mpi_isend_charset(char * data, size_t size, int rank){
+	size_t buffer_size = size;
+	char * buffer = calloc(buffer_size, sizeof(char));
+
+	memcpy(buffer, data, buffer_size);
+
+	MPI_Request request;
+
+	MPI_Isend(buffer, buffer_size, MPI_CHAR, rank, 2, MPI_COMM_WORLD, &request);
+
+	return 0;
+}
+
+
+int mpi_recv_charset(char ** data, size_t * size){
+	MPI_Status status;
+	int buffer_size = 0;
+
+	MPI_Probe(0, 2, MPI_COMM_WORLD, &status);
+	MPI_Get_count(&status, MPI_CHAR, &buffer_size);
+
+	char * buffer = NULL;
+	buffer = calloc(buffer_size + 1, sizeof(char));
+
+	MPI_Recv(buffer, buffer_size, MPI_CHAR, 0, 2, MPI_COMM_WORLD, &status);
+
+	*size = buffer_size;
+	*data = buffer;
+	return 0;
+}
+
 #endif

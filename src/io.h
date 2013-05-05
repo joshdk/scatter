@@ -16,6 +16,9 @@ int mpi_recv_hash_type(char ** type);
 int mpi_isend_hashes(char ** data, size_t nmem, size_t size, int rank);
 int mpi_recv_hashes(char *** data, size_t size, size_t * nmem);
 
+int mpi_isend_charset(char * data, size_t size, int rank);
+int mpi_recv_charset(char ** data, size_t * size);
+
 int mpi_isend_start(int rank);
 int mpi_isend_stop(int rank);
 
