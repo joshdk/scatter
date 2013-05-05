@@ -234,11 +234,6 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	for(size_t i=0; i<hashes_length; i++){
-		free(hashes[i]);
-	}
-	free(hashes);
-
 	size_t charset_length = 0;
 	char * charset = NULL;
 	mpi_recv_charset(&charset, &charset_length);
@@ -255,12 +250,19 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	pass_init(&pstp, charset_length);
 	pass_load_int(&pstp, ranks-1);
 
-	size_t iterations = 1000;
+	size_t iterations = 1000000;
 	for(size_t n=0; n<iterations; n++){
 		pass_blit(&pctx, charset, pass, &pass_length);
 		// printf("pass: %s\n", pass);
 		hctx.hash(pass, pass_length, hash, &hash_size);
 		// print_hex(hash, hash_size);
+		for(size_t i=0; i<hashes_length; i++){
+			if(memcmp(hash, hashes[i], hash_size) == 0){
+				printf("rank: %zu \"%s\" => ", rank, pass);
+				print_hex(hash, hash_size);
+			}
+		}
+
 		pass_step(&pctx, &pstp);
 	}
 
@@ -273,6 +275,11 @@ int mpi_slave(size_t ranks, size_t rank, void * data){
 	free(hash);
 
 	hash_fini(&hctx);
+
+	for(size_t i=0; i<hashes_length; i++){
+		free(hashes[i]);
+	}
+	free(hashes);
 
 	return 0;
 }
